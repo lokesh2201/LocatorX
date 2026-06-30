@@ -1,0 +1,19 @@
+{
+  "name": "locator-agent",
+  "version": "1.0.0",
+  "description": "",
+  "main": "agent.js",
+  "scripts": {
+    "start": "node agent.js",
+    "test": "node --test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@mistralai/mistralai": "^2.2.5",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "playwright": "^1.60.0"
+  }
+}

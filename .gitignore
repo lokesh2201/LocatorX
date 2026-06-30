@@ -1,0 +1,17 @@
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
+
+# Dependencies
+node_modules/
+
+# Saved login sessions — contain cookies/tokens; must never be committed
+sessions/
+
+# Environment / secrets
+.env
+.env.*
+
+# Logs & OS noise
+*.log
+.DS_Store
+Thumbs.db

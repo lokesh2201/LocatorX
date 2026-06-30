@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>LocatorX</title>
+  <style>
+    :root {
+      --bg:#0d1117; --surface:#161b22; --border:#21262d;
+      --accent:#58a6ff; --accent2:#3fb950; --warn:#d29922;
+      --danger:#f85149; --text:#e6edf3; --muted:#8b949e;
+      --mono:'JetBrains Mono','Fira Code',monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;min-height:100vh;}
+
+    header{border-bottom:1px solid var(--border);padding:15px 28px;display:flex;align-items:center;gap:12px;background:var(--surface);}
+    .logo{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;background:linear-gradient(135deg,#58a6ff,#3fb950);}
+    header h1{font-size:15px;font-weight:600;}
+    .badge{margin-left:auto;font-size:11px;color:var(--muted);background:var(--border);padding:3px 8px;border-radius:20px;}
+
+    main{max-width:1200px;margin:0 auto;padding:24px 20px;}
+
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:18px;}
+    .panel-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;}
+
+    .fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
+    @media(max-width:600px){.fields{grid-template-columns:1fr;}}
+    label.field-label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;font-weight:500;}
+    input[type=url],input[type=password]{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:12.5px;outline:none;transition:border-color .15s;}
+    input:focus{border-color:var(--accent);}
+    input::placeholder{color:var(--muted);opacity:.5;}
+
+    /* Toggle groups */
+    .toggles-row{display:flex;flex-wrap:wrap;gap:20px;margin-bottom:16px;padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;}
+    .toggle-group{display:flex;flex-direction:column;gap:6px;}
+    .toggle-group-label{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
+    .toggle-chips{display:flex;gap:6px;flex-wrap:wrap;}
+
+    .chip{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 13px;border-radius:20px;font-size:12px;font-weight:500;
+      border:1.5px solid var(--border);background:var(--bg);color:var(--muted);
+      cursor:pointer;transition:all .15s;user-select:none;
+      font-family:inherit;line-height:1.4;
+    }
+    .chip:hover{border-color:var(--muted);color:var(--text);}
+    .chip:focus-visible,button:focus-visible,select:focus-visible,.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+    .chip.active{border-color:var(--accent);background:rgba(88,166,255,.1);color:var(--accent);}
+    .chip .chip-icon{font-size:13px;}
+
+    .chip.pom-off{border-color:var(--border);color:var(--muted);}
+    .chip.pom-on{border-color:var(--accent2);background:rgba(63,185,80,.1);color:var(--accent2);}
+
+    .validation-msg{font-size:11.5px;color:var(--danger);margin-top:6px;display:none;}
+    .validation-msg.show{display:block;}
+
+    .actions{display:flex;gap:10px;align-items:center;margin-top:14px;}
+    button.primary{background:var(--accent);color:#0d1117;border:none;border-radius:7px;padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s;}
+    button.primary:hover{opacity:.85;}
+    button.primary:disabled{opacity:.4;cursor:not-allowed;}
+    button.secondary{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:8px 14px;font-size:12.5px;cursor:pointer;transition:.15s;}
+    button.secondary:hover{color:var(--text);border-color:var(--muted);}
+
+    /* Session row */
+    .session-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;}
+    .session-select-wrap{flex:1;min-width:220px;}
+    select#sessionSelect{
+      width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;
+      padding:9px 32px 9px 12px;color:var(--text);font-size:12.5px;outline:none;cursor:pointer;
+      /* Replace the native browser arrow (which renders as its own mismatched
+         grey box in dark mode) with a custom chevron that matches the theme. */
+      appearance:none;-webkit-appearance:none;-moz-appearance:none;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%238b949e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+      background-repeat:no-repeat;background-position:right 12px center;
+    }
+    select#sessionSelect:focus{border-color:var(--accent);}
+    .session-age{font-size:10.5px;color:var(--muted);margin-top:4px;}
+    button.login-btn{
+      background:transparent;color:var(--warn);border:1px solid rgba(210,153,34,.35);
+      border-radius:7px;padding:9px 14px;font-size:12.5px;cursor:pointer;white-space:nowrap;
+      transition:.15s;display:inline-flex;align-items:center;gap:6px;
+    }
+    button.login-btn:hover{background:rgba(210,153,34,.08);}
+
+    /* Login modal */
+    #loginModal{
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+      align-items:center;justify-content:center;z-index:1000;
+    }
+    #loginModal.show{display:flex;}
+    .modal-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:28px;max-width:420px;width:90%;text-align:center;
+    }
+    .modal-card .modal-icon{font-size:36px;margin-bottom:12px;}
+    .modal-card h3{font-size:16px;margin-bottom:10px;}
+    .modal-card p{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;}
+    .modal-actions{display:flex;gap:10px;justify-content:center;}
+    .modal-actions button{padding:10px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;}
+    .modal-actions .confirm-btn{background:var(--accent2);color:#0d1117;}
+    .modal-actions .confirm-btn:hover{opacity:.85;}
+    .modal-actions .confirm-btn.danger{background:var(--danger);color:#fff;}
+    .modal-actions .cancel-btn{background:transparent;color:var(--muted);border:1px solid var(--border);}
+    .modal-actions .cancel-btn:hover{color:var(--text);}
+    .modal-card h3{font-size:16px;margin-bottom:10px;}
+
+    /* Toasts */
+    #toastWrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:2000;}
+    .toast{
+      background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);
+      border-radius:8px;padding:11px 16px;font-size:13px;color:var(--text);
+      box-shadow:0 6px 20px rgba(0,0,0,.4);min-width:220px;max-width:340px;
+      animation:toastIn .2s ease;transition:opacity .3s;
+    }
+    .toast.error{border-left-color:var(--danger);}
+    .toast.success{border-left-color:var(--accent2);}
+    @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .modal-spinner{
+      width:32px;height:32px;border:3px solid rgba(88,166,255,.2);border-top-color:var(--accent);
+      border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px;
+    }
+
+    #sessionExpiredBanner{
+      display:none;align-items:center;gap:10px;padding:12px 16px;border-radius:8px;
+      font-size:13px;margin-bottom:16px;background:rgba(248,81,73,.08);
+      border:1px solid rgba(248,81,73,.25);color:var(--danger);
+    }
+    #sessionExpiredBanner.show{display:flex;}
+    #sessionExpiredBanner button{
+      background:var(--danger);color:#fff;border:none;border-radius:6px;
+      padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;margin-left:auto;white-space:nowrap;
+    }
+
+    /* Pipeline */
+    .pipeline{display:flex;gap:0;margin-bottom:18px;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+    .pip-step{flex:1;padding:9px 12px;font-size:11px;border-right:1px solid var(--border);display:flex;align-items:center;gap:6px;transition:background .2s;}
+    .pip-step:last-child{border-right:none;}
+    .pip-step .dot{width:7px;height:7px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .2s;}
+    .pip-step.active{background:rgba(88,166,255,.06);}
+    .pip-step.active .dot{background:var(--accent);animation:pulse 1s infinite;}
+    .pip-step.done{background:rgba(63,185,80,.04);}
+    .pip-step.done .dot{background:var(--accent2);}
+    .pip-step.skip{opacity:.4;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    #status{display:none;align-items:center;gap:10px;padding:11px 15px;border-radius:8px;font-size:13px;margin-bottom:16px;}
+    #status.loading{display:flex;background:rgba(88,166,255,.07);border:1px solid rgba(88,166,255,.2);color:var(--accent);}
+    #status.error{display:flex;background:rgba(248,81,73,.07);border:1px solid rgba(248,81,73,.2);color:var(--danger);}
+    .spinner{width:13px;height:13px;border:2px solid rgba(88,166,255,.3);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+
+    .stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:110px;}
+    .stat-num{font-size:22px;font-weight:700;font-family:var(--mono);color:var(--accent);}
+    .stat-num.green{color:var(--accent2);}
+    .stat-num.warn{color:var(--warn);}
+    .stat-label{font-size:11px;color:var(--muted);margin-top:2px;}
+    .type-badges{display:flex;gap:5px;flex-wrap:wrap;margin-left:auto;align-items:center;}
+    .type-badge{font-size:10.5px;padding:3px 8px;border-radius:4px;background:rgba(88,166,255,.1);color:var(--accent);border:1px solid rgba(88,166,255,.2);}
+
+    .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:14px;}
+    .tab{padding:9px 16px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);transition:.15s;}
+    .tab:hover{color:var(--text);}
+    .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .tab.disabled-tab{opacity:.35;cursor:not-allowed;pointer-events:none;}
+
+    .filter-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+    .filter-bar input{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:7px 11px;color:var(--text);font-size:12px;outline:none;width:200px;}
+    .filter-bar input:focus{border-color:var(--accent);}
+    .filter-bar input::placeholder{color:var(--muted);}
+
+    .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:9px;}
+    table{width:100%;border-collapse:collapse;font-size:12px;}
+    thead{background:var(--surface);position:sticky;top:0;}
+    th{padding:9px 13px;text-align:left;font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap;}
+    td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5;}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:rgba(255,255,255,.02);}
+
+    .el-label{font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .el-type{font-family:var(--mono);color:var(--accent);background:rgba(88,166,255,.1);padding:2px 6px;border-radius:4px;font-size:11px;}
+    .locator-cell{font-family:var(--mono);font-size:11px;color:#adbac7;max-width:240px;word-break:break-all;}
+    .locator-wrap{display:flex;align-items:flex-start;gap:5px;}
+    .copy-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:1px;font-size:11px;transition:color .12s;flex-shrink:0;}
+    .copy-btn:hover{color:var(--accent);}
+    .copy-btn.copied{color:var(--accent2);}
+    .na-cell{color:var(--border);font-size:11px;font-style:italic;}
+
+    .verified-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--accent2);background:rgba(63,185,80,.1);padding:2px 7px;border-radius:4px;}
+    .strategy-chip{font-size:10.5px;padding:2px 6px;border-radius:4px;display:inline-block;font-weight:500;}
+    .s-id,.s-testid{background:rgba(63,185,80,.12);color:var(--accent2);}
+    .s-attr{background:rgba(88,166,255,.12);color:var(--accent);}
+    .s-text{background:rgba(210,153,34,.12);color:var(--warn);}
+    .s-index,.s-fallback{background:rgba(139,148,158,.1);color:var(--muted);}
+
+    .rtag{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.04em;}
+    .rtag.LOW_CONFIDENCE{background:rgba(139,148,158,.15);color:var(--muted);}
+    .rtag.NO_MATCH{background:rgba(248,81,73,.12);color:var(--danger);}
+    .rtag.MULTI_MATCH{background:rgba(210,153,34,.12);color:var(--warn);}
+    .rtag.DUPLICATE{background:rgba(88,166,255,.12);color:var(--accent);}
+    .rtag.VIEWPORT_DEPENDENT{background:rgba(163,113,247,.12);color:#a371f7;}
+    .rejection-reason{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.4;}
+
+    .rsummary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .rchip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:5px 12px;border-radius:6px;font-weight:500;}
+    .rchip.LOW_CONFIDENCE{background:rgba(139,148,158,.1);color:var(--muted);border:1px solid rgba(139,148,158,.2);}
+    .rchip.NO_MATCH{background:rgba(248,81,73,.08);color:var(--danger);border:1px solid rgba(248,81,73,.2);}
+    .rchip.MULTI_MATCH{background:rgba(210,153,34,.08);color:var(--warn);border:1px solid rgba(210,153,34,.2);}
+    .rchip.DUPLICATE{background:rgba(88,166,255,.08);color:var(--accent);border:1px solid rgba(88,166,255,.2);}
+    .rchip.VIEWPORT_DEPENDENT{background:rgba(163,113,247,.08);color:#a371f7;border:1px solid rgba(163,113,247,.2);}
+    .rchip .rcount{font-family:var(--mono);font-size:13px;font-weight:700;}
+
+    #pomPanel{display:none;}
+    .pom-disabled{padding:40px;text-align:center;color:var(--muted);font-size:13px;}
+    .pom-actions{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
+    .pom-filename{font-size:12px;color:var(--muted);font-family:var(--mono);}
+    pre{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;overflow-x:auto;font-family:var(--mono);font-size:11.5px;line-height:1.7;color:#adbac7;max-height:500px;overflow-y:auto;}
+
+    .export-bar{margin-top:14px;display:flex;gap:8px;justify-content:flex-end;}
+    #results{display:none;}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">AI</div>
+  <h1>LocatorX</h1>
+  <span class="badge">Playwright + Mistral AI</span>
+</header>
+
+<main>
+  <div class="panel">
+    <div class="panel-title">Configure</div>
+
+    <div class="fields">
+      <div>
+        <label class="field-label" for="urlInput">Page URL</label>
+        <input type="url" id="urlInput" placeholder="https://your-app.com/page"/>
+      </div>
+      <div>
+        <label class="field-label" for="apiKeyInput">Mistral API Key <span style="color:var(--muted);font-weight:400"></span></label>
+        <input type="password" id="apiKeyInput" placeholder="Your Mistral API key..."/>
+      </div>
+    </div>
+
+    <!-- Anonymous mode toggle -->
+    <div class="session-row" id="anonModeRow" style="margin-bottom:8px">
+      <button type="button" class="chip" id="chip-anon" aria-pressed="false" onclick="toggleAnonymousMode()" title="Skip all saved-session storage and lookups - for users who never log in to test pages">Anonymous Mode (no sessions)</button>
+      <span style="font-size:11px;color:var(--muted)" id="anonModeHint">Off - saved sessions available below</span>
+    </div>
+
+    <!-- Session row -->
+    <div class="session-row" id="sessionRow">
+      <div class="session-select-wrap">
+        <label class="field-label">Saved Session <span style="color:var(--muted);font-weight:400">(optional - for login-protected pages)</span></label>
+        <select id="sessionSelect" onchange="onSessionSelectChange()">
+          <option value="">No session (anonymous)</option>
+        </select>
+        <div class="session-age" id="sessionAgeHint"></div>
+      </div>
+      <button class="login-btn" onclick="startLoginFlow()">Login &amp; Save Session</button>
+      <button class="secondary" id="deleteSessionBtn" style="display:none" onclick="deleteCurrentSession()">Delete</button>
+    </div>
+
+    <!-- Session expired banner -->
+    <div id="sessionExpiredBanner">
+      <span>[!] Saved session expired or invalid - redirected to a login page.</span>
+      <button onclick="startLoginFlow()">Re-login</button>
+    </div>
+
+    <!-- Toggle groups -->
+    <div class="toggles-row">
+
+      <div class="toggle-group">
+        <div class="toggle-group-label">Locator Types <span style="color:var(--danger)">*</span> <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(select at least one)</span></div>
+        <div class="toggle-chips" role="group" aria-label="Locator types">
+          <button type="button" class="chip" id="chip-playwright" aria-pressed="false" onclick="toggleLocator('playwright')">Playwright Built-in</button>
+          <button type="button" class="chip" id="chip-xpath" aria-pressed="false" onclick="toggleLocator('xpath')">XPath</button>
+          <button type="button" class="chip" id="chip-css" aria-pressed="false" onclick="toggleLocator('css')">CSS Selector</button>
+        </div>
+        <div class="validation-msg" id="locatorValidation" role="alert">Please select at least one locator type.</div>
+      </div>
+
+      <div style="width:1px;background:var(--border);margin:0 4px;"></div>
+
+      <div class="toggle-group">
+        <div class="toggle-group-label">POM Export</div>
+        <div class="toggle-chips">
+          <button type="button" class="chip pom-on" id="chip-pom" aria-pressed="true" onclick="togglePOM()">Generate POM</button>
+          <select id="pomFormatSelect" aria-label="POM output format" onchange="onPomFormatChange()" style="background:var(--bg2,#161b22);color:var(--text,#c9d1d9);border:1px solid var(--border);border-radius:6px;font-size:12px;padding:4px 8px;">
+            <option value="playwright">Playwright (JS)</option>
+            <option value="java">Selenium (Java)</option>
+          </select>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:5px" id="pomHint">POM will be generated</div>
+      </div>
+
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="analyzeBtn" onclick="analyze()">Analyze Page</button>
+      <button class="secondary" id="cancelBtn" onclick="cancelAnalyze()" style="display:none">Cancel</button>
+      <button class="secondary" onclick="clearAll()">Clear</button>
+      <span style="font-size:12px;color:var(--muted);margin-left:6px" id="timer"></span>
+    </div>
+  </div>
+
+  <div class="pipeline" id="pipeline" style="display:none">
+    <div class="pip-step" id="p1"><span class="dot"></span>1. Playwright Fetch</div>
+    <div class="pip-step" id="p2"><span class="dot"></span>2. Extract Elements</div>
+    <div class="pip-step" id="p3"><span class="dot"></span>3. Mistral AI</div>
+    <div class="pip-step" id="p4"><span class="dot"></span>4. Verify Locators</div>
+    <div class="pip-step" id="p5"><span class="dot"></span>5. Build POM</div>
+  </div>
+
+  <div id="status" role="status" aria-live="polite"></div>
+
+  <div id="results">
+    <div class="stats">
+      <div class="stat-card"><div class="stat-num" id="sExtracted">0</div><div class="stat-label">Elements Found</div></div>
+      <div class="stat-card"><div class="stat-num warn" id="sGenerated">0</div><div class="stat-label">AI Generated</div></div>
+      <div class="stat-card"><div class="stat-num green" id="sVerified">0</div><div class="stat-label">Verified</div></div>
+      <div class="stat-card" style="flex:1">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px" id="pageTitle"></div>
+        <div class="type-badges" id="typeBadges"></div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" id="tabLocators" onclick="switchTab('locators',this)">Locators Table</div>
+      <div class="tab" id="tabRejected" onclick="switchTab('rejected',this)">Rejected <span id="rejectedCount" style="font-size:11px;background:rgba(248,81,73,.15);color:var(--danger);padding:1px 6px;border-radius:10px;margin-left:4px">0</span></div>
+      <div class="tab" id="tabPom" onclick="switchTab('pom',this)">Playwright POM</div>
+    </div>
+
+    <div id="locatorsPanel">
+      <div class="filter-bar">
+        <input type="text" id="searchFilter" placeholder="Search element, locator..." oninput="filterTable()"/>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr id="tableHead"></tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="export-bar">
+        <button class="secondary" onclick="exportXLSX()">Export Excel (.xlsx)</button>
+        <button class="secondary" onclick="exportJSON()">Export JSON</button>
+      </div>
+    </div>
+
+    <div id="rejectedPanel" style="display:none">
+      <div class="rsummary" id="rejectionSummaryBar"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr id="rejectedHead"></tr></thead>
+          <tbody id="rejectedBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="pomPanel">
+      <div class="pom-actions">
+        <span class="pom-filename" id="pomFilename"></span>
+        <button class="secondary" onclick="downloadPOM()">Download .js</button>
+        <button class="secondary" onclick="copyPOM()">Copy</button>
+      </div>
+      <pre id="pomCode"></pre>
+    </div>
+  </div>
+</main>
+
+<div id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginModalCard">
+  <div class="modal-card" id="loginModalCard"></div>
+</div>
+
+<div id="toastWrap" aria-live="polite" aria-atomic="false"></div>
+
+<script>
+// State
+let selectedLocators = new Set(['playwright']);
+let pomEnabled = true;
+let pomFormat = 'playwright';
+let allLocators = [];
+let rejectedLocators = [];
+let pomContent = '';
+let activeTab = 'locators';
+let timerInterval;
+let pendingLoginToken = null;
+let anonymousMode = false;
+let analyzeController = null;
+let currentRunId = null;
+
+// Per-run id so the server can tie a cancel request to the right run.
+function genRunId() {
+  if (window.crypto && crypto.randomUUID) return 'run_' + crypto.randomUUID().replace(/-/g, '');
+  return 'run_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const pwChip = document.getElementById('chip-playwright');
+  pwChip.classList.add('active');
+  pwChip.setAttribute('aria-pressed', 'true');
+  document.getElementById('urlInput').addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') analyze();
+  });
+
+  // Anonymous Mode is opt-in and remembered across reloads. When it's on,
+  // we never call GET /api/sessions at all — no session-directory scan/prune
+  // happens on the server for users who never use saved logins.
+  anonymousMode = localStorage.getItem('aiLocatorAnonymousMode') === '1';
+  applyAnonymousModeUI();
+  if (!anonymousMode) loadSessions();
+
+  // Restore the most recent analysis (if any) so a refresh / accidental tab
+  // reload doesn't throw away a result that took 30s to produce.
+  restoreResults();
+});
+
+// ---- Toast notifications ----
+
+function toast(msg, type = 'info', ms = 3200) {
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast' + (type === 'info' ? '' : ' ' + type);
+  t.setAttribute('role', 'status');
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(() => {
+    t.style.opacity = '0';
+    setTimeout(() => t.remove(), 300);
+  }, ms);
+}
+
+// ---- Anonymous Mode ----
+
+function applyAnonymousModeUI() {
+  const chip = document.getElementById('chip-anon');
+  const hint = document.getElementById('anonModeHint');
+  const sessionRow = document.getElementById('sessionRow');
+  if (anonymousMode) {
+    chip.classList.add('active');
+    chip.setAttribute('aria-pressed', 'true');
+    hint.textContent = 'On - session storage skipped entirely';
+    sessionRow.style.display = 'none';
+    document.getElementById('sessionSelect').value = '';
+    document.getElementById('sessionExpiredBanner').classList.remove('show');
+  } else {
+    chip.classList.remove('active');
+    chip.setAttribute('aria-pressed', 'false');
+    hint.textContent = 'Off - saved sessions available below';
+    sessionRow.style.display = 'flex';
+  }
+}
+
+function toggleAnonymousMode() {
+  anonymousMode = !anonymousMode;
+  localStorage.setItem('aiLocatorAnonymousMode', anonymousMode ? '1' : '0');
+  applyAnonymousModeUI();
+  if (!anonymousMode) loadSessions();
+}
+
+// ---- Session Management ----
+
+async function loadSessions() {
+  if (anonymousMode) return; // never hit /api/sessions in Anonymous Mode
+  try {
+    const res = await fetch('/api/sessions');
+    const data = await res.json();
+    const select = document.getElementById('sessionSelect');
+    const current = select.value;
+    select.innerHTML = '<option value="">No session (anonymous)</option>';
+    (data.sessions || []).forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.domain;
+      opt.textContent = s.domain + '  -  saved ' + s.ageLabel;
+      opt.dataset.age = s.ageLabel;
+      select.appendChild(opt);
+    });
+    if (current) select.value = current;
+    onSessionSelectChange();
+  } catch (err) {
+    console.error('Failed to load sessions:', err);
+  }
+}
+
+function onSessionSelectChange() {
+  const select = document.getElementById('sessionSelect');
+  const hint = document.getElementById('sessionAgeHint');
+  const delBtn = document.getElementById('deleteSessionBtn');
+  const opt = select.options[select.selectedIndex];
+  if (select.value) {
+    hint.textContent = 'Last logged in ' + (opt.dataset.age || '');
+    delBtn.style.display = 'inline-block';
+  } else {
+    hint.textContent = '';
+    delBtn.style.display = 'none';
+  }
+  document.getElementById('sessionExpiredBanner').classList.remove('show');
+}
+
+function deleteCurrentSession() {
+  const select = document.getElementById('sessionSelect');
+  const domain = select.value;
+  if (!domain) return;
+  confirmModal({
+    title: 'Delete saved session?',
+    body: 'Delete the saved session for ' + domain + '? You\'ll need to log in again to use it.',
+    confirmLabel: 'Delete',
+    danger: true,
+    onConfirm: async () => {
+      try {
+        await fetch('/api/sessions/' + domain, { method: 'DELETE' });
+        await loadSessions();
+        toast('Session deleted for ' + domain, 'success');
+      } catch (err) {
+        toast('Failed to delete session: ' + err.message, 'error');
+      }
+    },
+  });
+}
+
+// ---- Modal controller (focus trap + Escape, accessible) ----
+
+let _modalKeydownHandler = null;
+let _modalLastFocus = null;
+let _modalConfirmCb = null;
+
+function showModal(html) {
+  const card = document.getElementById('loginModalCard');
+  const modal = document.getElementById('loginModal');
+  if (!modal.classList.contains('show')) _modalLastFocus = document.activeElement;
+  card.innerHTML = html;
+  modal.classList.add('show');
+
+  // Move focus into the dialog.
+  setTimeout(() => {
+    const f = card.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (f) f.focus();
+  }, 0);
+
+  if (!_modalKeydownHandler) {
+    _modalKeydownHandler = ev => {
+      if (ev.key === 'Escape') { ev.preventDefault(); onModalEscape(); }
+      else if (ev.key === 'Tab') trapModalFocus(ev, card);
+    };
+    document.addEventListener('keydown', _modalKeydownHandler);
+  }
+}
+
+function hideModal() {
+  document.getElementById('loginModal').classList.remove('show');
+  if (_modalKeydownHandler) {
+    document.removeEventListener('keydown', _modalKeydownHandler);
+    _modalKeydownHandler = null;
+  }
+  _modalConfirmCb = null;
+  // Return focus to whatever opened the modal.
+  if (_modalLastFocus && _modalLastFocus.focus) { try { _modalLastFocus.focus(); } catch (_) {} }
+  _modalLastFocus = null;
+}
+
+// Escape: cancel an in-flight login flow (so the headed browser is closed),
+// otherwise just dismiss.
+function onModalEscape() {
+  if (pendingLoginToken) cancelLoginFlow();
+  else hideModal();
+}
+
+function trapModalFocus(ev, container) {
+  const els = container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  if (!els.length) return;
+  const first = els[0], last = els[els.length - 1];
+  if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+  else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+}
+
+// Generic confirm dialog, reuses the modal — replaces window.confirm().
+function confirmModal({ title, body, confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = false, onConfirm }) {
+  _modalConfirmCb = onConfirm;
+  showModal(
+    '<h3>' + e(title) + '</h3>' +
+    '<p>' + e(body) + '</p>' +
+    '<div class="modal-actions">' +
+    '<button class="cancel-btn" onclick="hideModal()">' + e(cancelLabel) + '</button>' +
+    '<button class="confirm-btn' + (danger ? ' danger' : '') + '" id="modalConfirmBtn">' + e(confirmLabel) + '</button>' +
+    '</div>'
+  );
+  document.getElementById('modalConfirmBtn').addEventListener('click', () => {
+    const cb = _modalConfirmCb;
+    hideModal();
+    if (cb) cb();
+  });
+}
+
+async function startLoginFlow() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) {
+    toast('Enter the page URL first — the login flow uses its domain.', 'error');
+    document.getElementById('urlInput').focus();
+    return;
+  }
+
+  showModal(
+    '<div class="modal-spinner"></div>' +
+    '<h3>Opening browser window...</h3>' +
+    '<p>A visible Chrome window will open. Log in there - including any 2FA, OTP, or SSO steps. This chat window stays as-is.</p>'
+  );
+
+  try {
+    const res = await fetch('/api/session/start-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to start login.');
+
+    pendingLoginToken = data.token;
+
+    showModal(
+      '<div class="modal-icon">Save Session</div>' +
+      '<h3>Waiting for you to log in</h3>' +
+      '<p>Complete login in the browser window that opened for <strong>' + e(data.domain) + '</strong>. ' +
+      'Once you are logged in and can see the app, click "I\'m Logged In" below.</p>' +
+      '<div class="modal-actions">' +
+      '<button class="cancel-btn" onclick="cancelLoginFlow()">Cancel</button>' +
+      '<button class="confirm-btn" onclick="confirmLoginFlow()">I\'m Logged In</button>' +
+      '</div>'
+    );
+  } catch (err) {
+    showModal(
+      '<div class="modal-icon">[!]</div>' +
+      '<h3>Could not open browser</h3>' +
+      '<p>' + e(err.message) + '</p>' +
+      '<div class="modal-actions"><button class="cancel-btn" onclick="hideModal()">Close</button></div>'
+    );
+  }
+}
+
+async function confirmLoginFlow() {
+  if (!pendingLoginToken) return hideModal();
+
+  showModal(
+    '<div class="modal-spinner"></div>' +
+    '<h3>Saving session...</h3>' +
+    '<p>Capturing your login state. This window will close automatically.</p>'
+  );
+
+  try {
+    const res = await fetch('/api/session/confirm-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: pendingLoginToken }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to save session.');
+
+    pendingLoginToken = null;
+    await loadSessions();
+    document.getElementById('sessionSelect').value = data.domain;
+    onSessionSelectChange();
+
+    showModal(
+      '<div class="modal-icon">Done!</div>' +
+      '<h3>Session saved!</h3>' +
+      '<p>Saved as <strong>' + e(data.domain) + '</strong>. It is now selected - you can analyze any page on this site without logging in again.</p>' +
+      '<div class="modal-actions"><button class="confirm-btn" onclick="hideModal()">Done</button></div>'
+    );
+  } catch (err) {
+    showModal(
+      '<div class="modal-icon">[!]</div>' +
+      '<h3>Could not save session</h3>' +
+      '<p>' + e(err.message) + '</p>' +
+      '<div class="modal-actions"><button class="cancel-btn" onclick="hideModal()">Close</button></div>'
+    );
+  }
+}
+
+async function cancelLoginFlow() {
+  if (pendingLoginToken) {
+    try {
+      await fetch('/api/session/cancel-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: pendingLoginToken }),
+      });
+    } catch (_) {}
+    pendingLoginToken = null;
+  }
+  hideModal();
+}
+
+// ---- Locator chip toggle ----
+
+function toggleLocator(type) {
+  const chip = document.getElementById('chip-' + type);
+  if (selectedLocators.has(type)) {
+    if (selectedLocators.size === 1) {
+      document.getElementById('locatorValidation').classList.add('show');
+      return;
+    }
+    selectedLocators.delete(type);
+    chip.classList.remove('active');
+    chip.setAttribute('aria-pressed', 'false');
+  } else {
+    selectedLocators.add(type);
+    chip.classList.add('active');
+    chip.setAttribute('aria-pressed', 'true');
+  }
+  document.getElementById('locatorValidation').classList.remove('show');
+}
+
+function togglePOM() {
+  pomEnabled = !pomEnabled;
+  applyPomUI();
+}
+
+// Syncs the POM toggle chip + hint to the current pomEnabled state. Shared by
+// togglePOM (user action) and renderResults (restoring a saved run's config).
+function applyPomUI() {
+  const chip = document.getElementById('chip-pom');
+  const hint = document.getElementById('pomHint');
+  chip.setAttribute('aria-pressed', pomEnabled ? 'true' : 'false');
+  if (pomEnabled) {
+    chip.className = 'chip pom-on';
+    chip.textContent = 'Generate POM';
+    hint.textContent = 'POM will be generated';
+    hint.style.color = 'var(--accent2)';
+  } else {
+    chip.className = 'chip pom-off';
+    chip.textContent = 'Generate POM';
+    hint.textContent = 'POM skipped';
+    hint.style.color = 'var(--muted)';
+  }
+}
+
+function onPomFormatChange() {
+  pomFormat = document.getElementById('pomFormatSelect').value;
+  const tab = document.getElementById('tabPom');
+  if (tab) tab.textContent = pomFormat === 'java' ? 'Java POM' : 'Playwright POM';
+}
+
+// ---- Pipeline helpers ----
+
+function pipStep(id, state) {
+  const el = document.getElementById(id);
+  if (el) el.className = 'pip-step ' + state;
+}
+
+function setStatus(type, msg) {
+  const el = document.getElementById('status');
+  el.className = type;
+  if (type === 'loading') el.innerHTML = '<div class="spinner"></div><span>' + msg + '</span>';
+  else if (type === 'error') el.innerHTML = '<span>' + msg + '</span>';
+  else { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+}
+
+function startTimer() {
+  const t = Date.now();
+  timerInterval = setInterval(() => {
+    document.getElementById('timer').textContent = ((Date.now() - t) / 1000).toFixed(1) + 's';
+  }, 100);
+}
+function stopTimer() { clearInterval(timerInterval); }
+
+// ---- Real-time progress over Server-Sent Events ----
+// Replaces the old fixed-timer simulation: the server emits an event as each
+// pipeline stage actually starts/finishes, so the UI reflects real state.
+
+let progressES = null;
+
+function openProgressStream(runId) {
+  closeProgressStream();
+  // Initial state: all steps pending, first step shown as active until the
+  // server's first event lands (handles the brief connect gap gracefully).
+  pipStep('p1', 'active');
+  setStatus('loading', 'Connecting…');
+
+  try {
+    progressES = new EventSource('/api/analyze/progress?runId=' + encodeURIComponent(runId));
+  } catch (_) {
+    progressES = null;
+    return;
+  }
+
+  progressES.onmessage = ev => {
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch (_) { return; }
+    if (!msg || !msg.key) return;
+    if (msg.key === 'end') { closeProgressStream(); return; }
+    if (/^p[1-5]$/.test(msg.key)) {
+      pipStep(msg.key, msg.state || '');
+      if (msg.msg) setStatus('loading', msg.msg);
+    }
+  };
+  // Network blips or stream close aren't fatal — the POST response is the
+  // source of truth for the final result, so just stop listening.
+  progressES.onerror = () => closeProgressStream();
+}
+
+function closeProgressStream() {
+  if (progressES) { try { progressES.close(); } catch (_) {} progressES = null; }
+}
+
+// ---- Main analyze ----
+
+async function analyze() {
+  const url = document.getElementById('urlInput').value.trim();
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  const sessionDomain = anonymousMode ? null : (document.getElementById('sessionSelect').value || null);
+
+  if (!url) { toast('Please enter a page URL.', 'error'); document.getElementById('urlInput').focus(); return; }
+  if (!apiKey) { toast('Please enter your Mistral API key.', 'error'); document.getElementById('apiKeyInput').focus(); return; }
+  if (selectedLocators.size === 0) {
+    document.getElementById('locatorValidation').classList.add('show');
+    return;
+  }
+
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('cancelBtn').style.display = 'inline-block';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('sessionExpiredBanner').classList.remove('show');
+  document.getElementById('pipeline').style.display = 'flex';
+  ['p1','p2','p3','p4','p5'].forEach(p => pipStep(p, ''));
+  startTimer();
+  analyzeController = new AbortController();
+  currentRunId = genRunId();
+  // Subscribe to real progress BEFORE kicking off the run so no early events
+  // are missed (the server also buffers + replays, as a belt-and-braces).
+  openProgressStream(currentRunId);
+
+  try {
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url,
+        mistralApiKey: apiKey,
+        locatorTypes: [...selectedLocators],
+        generatePom: pomEnabled,
+        pomFormat,
+        sessionDomain,
+        runId: currentRunId,
+      }),
+      signal: analyzeController.signal,
+    });
+    const data = await res.json();
+    closeProgressStream();
+
+    // Server acknowledged a cancel before we finished reading — bail quietly.
+    if (data.cancelled) {
+      ['p1','p2','p3','p4','p5'].forEach(p => pipStep(p, ''));
+      document.getElementById('pipeline').style.display = 'none';
+      setStatus('hidden');
+      return;
+    }
+
+    if (!res.ok) {
+      if (data.code === 'SESSION_EXPIRED') {
+        ['p1','p2','p3','p4','p5'].forEach(p => pipStep(p, ''));
+        setStatus('hidden');
+        document.getElementById('sessionExpiredBanner').classList.add('show');
+        return;
+      }
+      throw new Error(data.error || 'Unknown error');
+    }
+
+    // Final sync of pipeline state (SSE 'end' usually got us here already).
+    ['p1','p2','p3','p4'].forEach(p => pipStep(p, 'done'));
+    if (pomEnabled) pipStep('p5', 'done'); else pipStep('p5', 'skip');
+    setStatus('hidden');
+
+    // Stamp the format used so a restored result labels/downloads correctly.
+    data.pomFormat = pomFormat;
+    data.url = data.url || url;
+    renderResults(data);
+    persistResults(data);
+
+  } catch (err) {
+    closeProgressStream();
+    ['p1','p2','p3','p4','p5'].forEach(p => pipStep(p, ''));
+    if (err.name === 'AbortError') {
+      document.getElementById('pipeline').style.display = 'none';
+      setStatus('hidden');
+    } else {
+      setStatus('error', err.message);
+    }
+  } finally {
+    analyzeController = null;
+    currentRunId = null;
+    document.getElementById('analyzeBtn').disabled = false;
+    document.getElementById('cancelBtn').style.display = 'none';
+    stopTimer();
+  }
+}
+
+// Renders a full analyze response into the results UI. Shared by a fresh run
+// and by restoreResults() on page load, so a refresh shows the same view.
+function renderResults(data) {
+  pomEnabled = !!data.generatePom;
+  applyPomUI();
+  if (data.pomFormat) {
+    pomFormat = data.pomFormat;
+    const sel = document.getElementById('pomFormatSelect');
+    if (sel) sel.value = pomFormat;
+  }
+
+  allLocators = data.locators || [];
+  rejectedLocators = data.rejected || [];
+  pomContent = data.pom || '';
+
+  document.getElementById('sExtracted').textContent = data.totalExtracted || 0;
+  document.getElementById('sGenerated').textContent = data.totalGenerated || 0;
+  document.getElementById('sVerified').textContent = data.totalVerified || 0;
+  document.getElementById('pageTitle').textContent = data.pageTitle || '';
+  document.getElementById('rejectedCount').textContent = data.totalRejected || 0;
+
+  renderRejected(rejectedLocators, data.rejectionSummary || {}, data.locatorTypes);
+
+  const badges = document.getElementById('typeBadges');
+  badges.innerHTML = (data.locatorTypes || []).map(t => {
+    const label = t === 'playwright' ? 'Playwright' : t === 'xpath' ? 'XPath' : 'CSS';
+    return '<span class="type-badge">' + label + '</span>';
+  }).join('');
+
+  renderTable(allLocators, data.locatorTypes);
+
+  const pomTab = document.getElementById('tabPom');
+  if (pomEnabled && pomContent) {
+    pomTab.classList.remove('disabled-tab');
+    pomTab.textContent = pomFormat === 'java' ? 'Java POM' : 'Playwright POM';
+    const ext = pomFormat === 'java' ? '.java' : '.js';
+    const baseName = (data.pageTitle || 'Page').replace(/[^a-zA-Z0-9]/g, '') + 'Page';
+    const filename = baseName + ext;
+    document.getElementById('pomPanel').innerHTML =
+      '<div class="pom-actions">' +
+      '<span class="pom-filename" id="pomFilename">' + e(filename) + '</span>' +
+      '<button class="secondary" onclick="downloadPOM()">Download ' + ext + '</button>' +
+      '<button class="secondary" onclick="copyPOM()">Copy</button>' +
+      '</div><pre id="pomCode">' + escHtml(pomContent) + '</pre>';
+  } else {
+    pomTab.classList.add('disabled-tab');
+    document.getElementById('pomPanel').innerHTML = '<div class="pom-disabled">POM generation was disabled for this run.<br><span style="font-size:12px">Enable "Generate POM" toggle and re-analyze to get the Page Object file.</span></div>';
+  }
+
+  switchTab('locators', document.getElementById('tabLocators'));
+  document.getElementById('results').style.display = 'block';
+}
+
+// ---- Result persistence (sessionStorage) ----
+
+const RESULT_KEY = 'aiLocatorLastResult';
+
+function persistResults(data) {
+  try { sessionStorage.setItem(RESULT_KEY, JSON.stringify({ data, savedAt: Date.now() })); } catch (_) { /* quota/full — non-fatal */ }
+}
+
+function restoreResults() {
+  let raw;
+  try { raw = sessionStorage.getItem(RESULT_KEY); } catch (_) { return; }
+  if (!raw) return;
+  let snap;
+  try { snap = JSON.parse(raw); } catch (_) { return; }
+  if (!snap || !snap.data) return;
+  try {
+    if (snap.data.url) document.getElementById('urlInput').value = snap.data.url;
+    renderResults(snap.data);
+    toast('Restored your last analysis result.', 'info');
+  } catch (_) { /* shape changed across versions — ignore stale snapshot */ }
+}
+
+// Cancels the in-flight analyze run. Aborts the browser's fetch for instant UI
+// feedback AND tells the server to tear down the headless browser for this run,
+// so the Playwright/Mistral work actually stops instead of running to completion.
+function cancelAnalyze() {
+  const runId = currentRunId;
+  closeProgressStream();
+  if (analyzeController) analyzeController.abort();
+  if (runId) {
+    fetch('/api/analyze/cancel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ runId }),
+    }).catch(() => { /* best-effort — UI already reset by the abort */ });
+  }
+}
+
+// ---- Render table ----
+
+function renderTable(locators, types) {
+  const wantPW = types.includes('playwright');
+  const wantXPath = types.includes('xpath');
+  const wantCSS = types.includes('css');
+
+  const head = document.getElementById('tableHead');
+  head.innerHTML =
+    '<th>#</th><th>Element</th><th>Tag</th>' +
+    (wantPW ? '<th>Playwright Locator</th>' : '') +
+    (wantXPath ? '<th>XPath</th>' : '') +
+    (wantCSS ? '<th>CSS Selector</th>' : '') +
+    '<th>Strategy</th><th>Verified</th>';
+
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  if (!locators.length) {
+    const cols = 5 + (wantPW?1:0) + (wantXPath?1:0) + (wantCSS?1:0);
+    tbody.innerHTML = '<tr><td colspan="' + cols + '" style="text-align:center;color:var(--muted);padding:28px">No verified locators found.</td></tr>';
+    return;
+  }
+
+  locators.forEach((loc, i) => {
+    const strat = (loc.locatorStrategy || '').toLowerCase();
+    const sc = strat.includes('testid') ? 's-testid' : strat.includes('id') ? 's-id'
+      : strat.includes('text') ? 's-text' : (strat.includes('index') || strat.includes('fallback')) ? 's-fallback' : 's-attr';
+
+    const tr = document.createElement('tr');
+    tr.dataset.search = (loc.elementLabel + ' ' + (loc.xpath||'') + ' ' + (loc.cssSelector||'') + ' ' + (loc.playwrightLocator||'') + ' ' + loc.elementType).toLowerCase();
+
+    const pwCell = wantPW ? '<td class="locator-cell">' + locatorWrap(loc.playwrightLocator) + '</td>' : '';
+    const xpCell = wantXPath ? '<td class="locator-cell">' + locatorWrap(loc.xpath) + '</td>' : '';
+    const cssCell = wantCSS ? '<td class="locator-cell">' + locatorWrap(loc.cssSelector) + '</td>' : '';
+
+    tr.innerHTML =
+      '<td style="color:var(--muted);font-family:var(--mono)">' + (i+1) + '</td>' +
+      '<td><div class="el-label" title="' + e(loc.elementLabel) + '">' + e(loc.elementLabel||'-') + '</div></td>' +
+      '<td><span class="el-type">' + e(loc.elementType||'-') + '</span></td>' +
+      pwCell + xpCell + cssCell +
+      '<td><span class="strategy-chip ' + sc + '">' + e(loc.locatorStrategy||'-') + '</span></td>' +
+      '<td><span class="verified-badge">Verified</span></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function locatorWrap(val) {
+  if (!val) return '<span class="na-cell">-</span>';
+  // Store the value in a data-attribute (HTML-escaped) and copy it via a single
+  // delegated click handler. Previously this inlined the value into an onclick
+  // string with only quote-escaping, which let crafted locator/page values break
+  // out of the JS string context and execute (XSS).
+  return '<div class="locator-wrap"><span>' + e(val) + '</span><button class="copy-btn" type="button" data-copy="' + e(val) + '">Copy</button></div>';
+}
+
+// Delegated copy handler — covers both the verified and rejected tables.
+document.addEventListener('click', ev => {
+  const btn = ev.target.closest('.copy-btn[data-copy]');
+  if (btn) cp(btn, btn.dataset.copy);
+});
+
+function filterTable() {
+  const s = document.getElementById('searchFilter').value.toLowerCase();
+  document.querySelectorAll('#tableBody tr').forEach(r => {
+    r.style.display = !s || (r.dataset.search || '').includes(s) ? '' : 'none';
+  });
+}
+
+// ---- Render rejected ----
+
+function renderRejected(rejected, summary, types) {
+  const wantPW = types.includes('playwright');
+  const wantXPath = types.includes('xpath');
+  const wantCSS = types.includes('css');
+
+  const bar = document.getElementById('rejectionSummaryBar');
+  const tagMeta = {
+    NO_MATCH: { label: 'No Match', desc: 'Locator found 0 elements' },
+    MULTI_MATCH: { label: 'Multi Match', desc: 'Matched 2+ elements - ambiguous' },
+    DUPLICATE: { label: 'Duplicate', desc: 'Locator already used by another element' },
+    LOW_CONFIDENCE: { label: 'Low Confidence', desc: 'Index-based - excluded by policy' },
+    VIEWPORT_DEPENDENT: { label: 'Viewport Dependent', desc: 'Matches at some screen sizes but not others' },
+  };
+  bar.innerHTML = Object.entries(summary).map(([tag, count]) => {
+    if (!count) return '';
+    const m = tagMeta[tag] || { label: tag, desc: '' };
+    return '<div class="rchip ' + tag + '" title="' + m.desc + '"><span class="rcount">' + count + '</span> ' + m.label + '</div>';
+  }).join('');
+
+  const head = document.getElementById('rejectedHead');
+  head.innerHTML =
+    '<th>#</th><th>Element</th><th>Type</th>' +
+    (wantPW ? '<th>Playwright Locator</th>' : '') +
+    (wantXPath ? '<th>XPath</th>' : '') +
+    (wantCSS ? '<th>CSS Selector</th>' : '') +
+    '<th>Confidence</th><th>Rejection Tag</th><th>Reason</th>';
+
+  const tbody = document.getElementById('rejectedBody');
+  tbody.innerHTML = '';
+
+  if (!rejected.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px">No rejections - all locators passed!</td></tr>';
+    return;
+  }
+
+  rejected.forEach((loc, i) => {
+    const tr = document.createElement('tr');
+    const pwCell = wantPW ? '<td class="locator-cell">' + locatorWrap(loc.playwrightLocator) + '</td>' : '';
+    const xpCell = wantXPath ? '<td class="locator-cell">' + locatorWrap(loc.xpath) + '</td>' : '';
+    const cssCell = wantCSS ? '<td class="locator-cell">' + locatorWrap(loc.cssSelector) + '</td>' : '';
+    tr.innerHTML =
+      '<td style="color:var(--muted);font-family:var(--mono)">' + (i+1) + '</td>' +
+      '<td><div class="el-label" title="' + e(loc.elementLabel) + '">' + e(loc.elementLabel||'-') + '</div></td>' +
+      '<td><span class="el-type">' + e(loc.elementType||'-') + '</span></td>' +
+      pwCell + xpCell + cssCell +
+      '<td><span class="strategy-chip s-attr">' + (loc.confidence||'-') + '</span></td>' +
+      '<td><span class="rtag ' + (loc.rejectionTag||'') + '">' + (loc.rejectionTag||'-') + '</span></td>' +
+      '<td><div class="rejection-reason">' + e(loc.rejectionReason||'-') + '</div></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+// ---- Tabs ----
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  activeTab = tab;
+  document.getElementById('locatorsPanel').style.display = tab === 'locators' ? 'block' : 'none';
+  document.getElementById('rejectedPanel').style.display = tab === 'rejected' ? 'block' : 'none';
+  document.getElementById('pomPanel').style.display = tab === 'pom' ? 'block' : 'none';
+}
+
+// ---- Utilities ----
+
+function clearAll() {
+  closeProgressStream();
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('pipeline').style.display = 'none';
+  document.getElementById('status').style.display = 'none';
+  document.getElementById('sessionExpiredBanner').classList.remove('show');
+  document.getElementById('urlInput').value = '';
+  document.getElementById('searchFilter').value = '';
+  document.getElementById('timer').textContent = '';
+  allLocators = []; rejectedLocators = []; pomContent = '';
+  document.getElementById('rejectedCount').textContent = '0';
+  // Drop the persisted snapshot too, so a refresh after Clear stays cleared.
+  try { sessionStorage.removeItem(RESULT_KEY); } catch (_) {}
+}
+
+function e(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function cp(btn, text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    btn.textContent = 'Copied'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+  } catch(_) {}
+}
+
+function downloadPOM() {
+  const fname = document.getElementById('pomFilename') ? document.getElementById('pomFilename').textContent : (pomFormat === 'java' ? 'PageObject.java' : 'PageObject.js');
+  const mime = pomFormat === 'java' ? 'text/x-java-source' : 'text/javascript';
+  dl(pomContent, fname, mime);
+}
+async function copyPOM() {
+  try { await navigator.clipboard.writeText(pomContent); toast('POM copied to clipboard!', 'success'); }
+  catch(_) { toast('Could not copy to clipboard.', 'error'); }
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Failed to load ' + src));
+    document.head.appendChild(s);
+  });
+}
+
+function exportXLSX() {
+  if (typeof XLSX !== 'undefined') { buildXLSX(); return; }
+  // Load the vendored copy first (works offline / under strict CSP); only fall
+  // back to the CDN if the local file is missing.
+  loadScript('vendor/xlsx.full.min.js')
+    .catch(() => loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'))
+    .then(() => buildXLSX())
+    .catch(() => alert('Could not load the Excel export library (offline?). Try JSON export instead.'));
+}
+
+function buildXLSX() {
+  const wb = XLSX.utils.book_new();
+
+  const vHeaders = ['#','Element','Type'];
+  const hasKeys = allLocators.length ? Object.keys(allLocators[0]) : [];
+  if (hasKeys.includes('playwrightLocator')) vHeaders.push('Playwright Locator');
+  if (hasKeys.includes('xpath')) vHeaders.push('XPath');
+  if (hasKeys.includes('cssSelector')) vHeaders.push('CSS Selector');
+  vHeaders.push('Strategy','Confidence','Status');
+
+  const vRows = allLocators.map((l, i) => {
+    const row = [i+1, l.elementLabel||'', l.elementType||''];
+    if (hasKeys.includes('playwrightLocator')) row.push(l.playwrightLocator||'');
+    if (hasKeys.includes('xpath')) row.push(l.xpath||'');
+    if (hasKeys.includes('cssSelector')) row.push(l.cssSelector||'');
+    row.push(l.locatorStrategy||'', l.confidence||'', 'Verified');
+    return row;
+  });
+
+  const ws1 = XLSX.utils.aoa_to_sheet([vHeaders, ...vRows]);
+  ws1['!cols'] = [
+    {wch:4}, {wch:22}, {wch:10},
+    ...(hasKeys.includes('playwrightLocator') ? [{wch:45}] : []),
+    ...(hasKeys.includes('xpath') ? [{wch:50}] : []),
+    ...(hasKeys.includes('cssSelector') ? [{wch:40}] : []),
+    {wch:20}, {wch:10}, {wch:14},
+  ];
+  ws1['!freeze'] = { xSplit: 1, ySplit: 1 };
+
+  XLSX.utils.book_append_sheet(wb, ws1, 'Verified Locators');
+
+  const rHeaders = ['#','Element','Type'];
+  const hasRKeys = rejectedLocators.length ? Object.keys(rejectedLocators[0]) : [];
+  if (hasRKeys.includes('playwrightLocator')) rHeaders.push('Playwright Locator');
+  if (hasRKeys.includes('xpath')) rHeaders.push('XPath');
+  if (hasRKeys.includes('cssSelector')) rHeaders.push('CSS Selector');
+  rHeaders.push('Confidence','Rejection Tag','Reason');
+
+  const rRows = rejectedLocators.map((l, i) => {
+    const row = [i+1, l.elementLabel||'', l.elementType||''];
+    if (hasRKeys.includes('playwrightLocator')) row.push(l.playwrightLocator||'');
+    if (hasRKeys.includes('xpath')) row.push(l.xpath||'');
+    if (hasRKeys.includes('cssSelector')) row.push(l.cssSelector||'');
+    row.push(l.confidence||'', l.rejectionTag||'', l.rejectionReason||'');
+    return row;
+  });
+
+  const ws2 = XLSX.utils.aoa_to_sheet([rHeaders, ...rRows]);
+  ws2['!cols'] = [
+    {wch:4}, {wch:22}, {wch:10},
+    ...(hasRKeys.includes('playwrightLocator') ? [{wch:45}] : []),
+    ...(hasRKeys.includes('xpath') ? [{wch:50}] : []),
+    ...(hasRKeys.includes('cssSelector') ? [{wch:40}] : []),
+    {wch:10}, {wch:16}, {wch:55},
+  ];
+  ws2['!freeze'] = { xSplit: 1, ySplit: 1 };
+
+  XLSX.utils.book_append_sheet(wb, ws2, 'Rejected Locators');
+
+  XLSX.writeFile(wb, 'locators.xlsx');
+}
+
+function exportJSON() { dl(JSON.stringify(allLocators, null, 2), 'locators.json', 'application/json'); }
+function dl(content, name, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type}));
+  a.download = name; a.click();
+}
+</script>
+</body>
+</html>
