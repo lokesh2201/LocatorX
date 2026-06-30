@@ -224,7 +224,7 @@
 <body>
 
 <header>
-  <div class="logo">AI</div>
+  <div class="logo">LX</div>
   <h1>LocatorX</h1>
   <span class="badge">Playwright + Mistral AI</span>
 </header>
@@ -246,8 +246,8 @@
 
     <!-- Anonymous mode toggle -->
     <div class="session-row" id="anonModeRow" style="margin-bottom:8px">
-      <button type="button" class="chip" id="chip-anon" aria-pressed="false" onclick="toggleAnonymousMode()" title="Skip all saved-session storage and lookups - for users who never log in to test pages">Anonymous Mode (no sessions)</button>
-      <span style="font-size:11px;color:var(--muted)" id="anonModeHint">Off - saved sessions available below</span>
+      <button type="button" class="chip" id="chip-anon" aria-pressed="false" onclick="toggleAnonymousMode()" title="Skip all saved-session storage and lookups - for users who never log in to test pages">Anonymous Mode</button>
+      
     </div>
 
     <!-- Session row -->
@@ -255,7 +255,7 @@
       <div class="session-select-wrap">
         <label class="field-label">Saved Session <span style="color:var(--muted);font-weight:400">(optional - for login-protected pages)</span></label>
         <select id="sessionSelect" onchange="onSessionSelectChange()">
-          <option value="">No session (anonymous)</option>
+          <option value="">No sessions</option>
         </select>
         <div class="session-age" id="sessionAgeHint"></div>
       </div>
@@ -441,14 +441,12 @@ function applyAnonymousModeUI() {
   if (anonymousMode) {
     chip.classList.add('active');
     chip.setAttribute('aria-pressed', 'true');
-    hint.textContent = 'On - session storage skipped entirely';
     sessionRow.style.display = 'none';
     document.getElementById('sessionSelect').value = '';
     document.getElementById('sessionExpiredBanner').classList.remove('show');
   } else {
     chip.classList.remove('active');
     chip.setAttribute('aria-pressed', 'false');
-    hint.textContent = 'Off - saved sessions available below';
     sessionRow.style.display = 'flex';
   }
 }
@@ -469,7 +467,7 @@ async function loadSessions() {
     const data = await res.json();
     const select = document.getElementById('sessionSelect');
     const current = select.value;
-    select.innerHTML = '<option value="">No session (anonymous)</option>';
+    select.innerHTML = '<option value="">No sessions</option>';
     (data.sessions || []).forEach(s => {
       const opt = document.createElement('option');
       opt.value = s.domain;
